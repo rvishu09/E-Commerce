@@ -24,6 +24,7 @@ with app.app_context():
 
 # ================= DATABASE MODELS ========================
 class Signup(db.Model):
+    __tablename__ = 'signup'
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(100), nullable=False)
