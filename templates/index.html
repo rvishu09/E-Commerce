@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
     <style>
         body {
             background-color: #f8f9fa;
@@ -250,60 +251,94 @@
         {% endfor %}
     </div>
 </div>
-
-<!-- Sign Up Modal -->
+<!-- Enhanced Sign Up Modal -->
 <div class="modal fade" id="signupModal" tabindex="-1" aria-labelledby="signupModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="signupModalLabel">Sign Up</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <h5 class="modal-title" id="signupModalLabel">
+                    <i class="fas fa-user-plus"></i> Create Account
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
             <div class="modal-body">
                 <form action="/signup" method="post">
-                    <div class="mb-3">
-                        <label for="username" class="form-label">Username</label>
-                        <input type="text" class="form-control" id="username" name="username" required>
+                    <div class="form-group">
+                        <label for="username" class="form-label">
+                            <i class="fas fa-user"></i> Username
+                        </label>
+                        <input type="text" class="form-control" id="username" name="username" 
+                               placeholder="Choose a username" required>
                     </div>
-                    <div class="mb-3">
-                        <label for="email" class="form-label">Email</label>
-                        <input type="email" class="form-control" id="email" name="email" required>
+                    <div class="form-group">
+                        <label for="email" class="form-label">
+                            <i class="fas fa-envelope"></i> Email Address
+                        </label>
+                        <input type="email" class="form-control" id="email" name="email" 
+                               placeholder="your@email.com" required>
                     </div>
-                    <div class="mb-3">
-                        <label for="password" class="form-label">Password</label>
-                        <input type="password" class="form-control" id="password" name="password" required>
+                    <div class="form-group">
+                        <label for="password" class="form-label">
+                            <i class="fas fa-lock"></i> Password
+                        </label>
+                        <input type="password" class="form-control" id="password" name="password" 
+                               placeholder="Create a strong password" required>
                     </div>
-                    <button type="submit" class="btn btn-primary">Sign Up</button>
+                    <button type="submit" class="btn btn-primary btn-auth btn-block">
+                        <i class="fas fa-user-plus"></i> Sign Up
+                    </button>
                 </form>
+                <div class="auth-switch">
+                    Already have an account? 
+                    <a href="#" data-dismiss="modal" data-toggle="modal" data-target="#signinModal">
+                        Sign In
+                    </a>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Sign In Modal -->
+<!-- Enhanced Sign In Modal -->
 <div class="modal fade" id="signinModal" tabindex="-1" aria-labelledby="signinModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="signinModalLabel">Sign In</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <h5 class="modal-title" id="signinModalLabel">
+                    <i class="fas fa-sign-in-alt"></i> Welcome Back
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
             <div class="modal-body">
                 <form action="/signin" method="post">
-                    <div class="mb-3">
-                        <label for="signinUsername" class="form-label">Username</label>
-                        <input type="text" class="form-control" id="signinUsername" name="signinUsername" required>
+                    <div class="form-group">
+                        <label for="signinUsername" class="form-label">
+                            <i class="fas fa-user"></i> Username
+                        </label>
+                        <input type="text" class="form-control" id="signinUsername" 
+                               name="signinUsername" placeholder="Enter your username" required>
                     </div>
-                    <div class="mb-3">
-                        <label for="signinPassword" class="form-label">Password</label>
-                        <input type="password" class="form-control" id="signinPassword" name="signinPassword" required>
+                    <div class="form-group">
+                        <label for="signinPassword" class="form-label">
+                            <i class="fas fa-lock"></i> Password
+                        </label>
+                        <input type="password" class="form-control" id="signinPassword" 
+                               name="signinPassword" placeholder="Enter your password" required>
                     </div>
-                    <button type="submit" class="btn btn-primary">Sign In</button>
+                    <button type="submit" class="btn btn-primary btn-auth btn-block">
+                        <i class="fas fa-sign-in-alt"></i> Sign In
+                    </button>
                 </form>
+                <div class="auth-switch">
+                    Don't have an account? 
+                    <a href="#" data-dismiss="modal" data-toggle="modal" data-target="#signupModal">
+                        Sign Up
+                    </a>
+                </div>
             </div>
         </div>
     </div>

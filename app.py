@@ -333,7 +333,7 @@ def add_to_cart():
         db.session.rollback()
         flash(f'Error adding to cart: {str(e)}', 'danger')
         return redirect(request.referrer or url_for('index'))
-    
+
 @app.route('/cart')
 @login_required
 def view_cart():
@@ -382,36 +382,39 @@ def update_cart(item_id):
     
     return redirect(url_for('view_cart'))
 
-
 @app.route('/add-to-wishlist', methods=['POST'])
 @login_required
 def add_to_wishlist():
-    product_name = request.form.get('product_name')
-    product_image = request.form.get('product_image')
-    product_brand = request.form.get('product_brand')
-    
-    # Check if already in wishlist
-    existing = Wishlist.query.filter_by(
-        user_id=session['user_id'],
-        product_name=product_name
-    ).first()
-    
-    if existing:
-        flash('Product already in wishlist!', 'info')
-    else:
-        wishlist_item = Wishlist(
+    try:
+        product_name = request.form.get('product_name')
+        product_image = request.form.get('product_image')
+        product_brand = request.form.get('product_brand')
+        
+        # Check if already in wishlist
+        existing = Wishlist.query.filter_by(
             user_id=session['user_id'],
-            product_name=product_name,
-            product_image=product_image,
-            product_brand=product_brand
-        )
-        db.session.add(wishlist_item)
-        db.session.commit()
-        flash('Product added to wishlist!', 'success')
+            product_name=product_name
+        ).first()
+        
+        if existing:
+            flash('Product already in wishlist!', 'info')
+        else:
+            wishlist_item = Wishlist(
+                user_id=session['user_id'],
+                product_name=product_name,
+                product_image=product_image,
+                product_brand=product_brand
+            )
+            db.session.add(wishlist_item)
+            db.session.commit()
+            flash('Product added to wishlist!', 'success')
+        
+        return redirect(request.referrer or url_for('index'))
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error adding to wishlist: {str(e)}', 'danger')
+        return redirect(request.referrer or url_for('index'))
     
-    return redirect(request.referrer or url_for('index'))
-
-
 @app.route('/wishlist')
 @login_required
 def view_wishlist():
