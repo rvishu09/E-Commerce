@@ -6,6 +6,7 @@
     <title>My Profile - Ecommerce System</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <style>
         body { background-color: #f8f9fa; }
         .profile-card {
@@ -45,6 +46,60 @@
             border-radius: 20px;
             font-size: 12px;
         }
+        .timeline {
+    position: relative;
+    padding: 20px 0;
+}
+
+.timeline-step {
+    position: relative;
+    padding-left: 40px;
+    padding-bottom: 30px;
+}
+
+.timeline-step:last-child {
+    padding-bottom: 0;
+}
+
+.timeline-step::before {
+    content: '';
+    position: absolute;
+    left: 10px;
+    top: 30px;
+    bottom: -10px;
+    width: 2px;
+    background: #e5e7eb;
+}
+
+.timeline-step.completed::before {
+    background: var(--success-color);
+}
+
+.timeline-marker {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: white;
+    border: 3px solid #e5e7eb;
+}
+
+.timeline-step.completed .timeline-marker {
+    border-color: var(--success-color);
+    background: var(--success-color);
+}
+
+.timeline-step.completed .timeline-marker::after {
+    content: '✓';
+    color: white;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 10px;
+}
     </style>
 </head>
 <body>
@@ -191,6 +246,37 @@
                             </div>
                         </div>
                     </div>
+                    <!-- Add this to the order detail modal in profile.html -->
+<div class="order-timeline mt-4">
+    <h6>Order Status Timeline:</h6>
+    <div class="timeline">
+        <div class="timeline-step {% if order.status in ['Pending', 'Confirmed', 'Shipped', 'Delivered'] %}completed{% endif %}">
+            <div class="timeline-marker"></div>
+            <div class="timeline-content">
+                <h6>Order Placed</h6>
+                <small>{{ order.created_at.strftime('%b %d, %Y %I:%M %p') }}</small>
+            </div>
+        </div>
+        <div class="timeline-step {% if order.status in ['Confirmed', 'Shipped', 'Delivered'] %}completed{% endif %}">
+            <div class="timeline-marker"></div>
+            <div class="timeline-content">
+                <h6>Order Confirmed</h6>
+            </div>
+        </div>
+        <div class="timeline-step {% if order.status in ['Shipped', 'Delivered'] %}completed{% endif %}">
+            <div class="timeline-marker"></div>
+            <div class="timeline-content">
+                <h6>Shipped</h6>
+            </div>
+        </div>
+        <div class="timeline-step {% if order.status == 'Delivered' %}completed{% endif %}">
+            <div class="timeline-marker"></div>
+            <div class="timeline-content">
+                <h6>Delivered</h6>
+            </div>
+        </div>
+    </div>
+</div>
                 </div>
                 {% endfor %}
                 {% else %}

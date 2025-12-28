@@ -83,6 +83,15 @@ class OrderItem(db.Model):
     product_price = db.Column(db.Float, nullable=False)
     quantity = db.Column(db.Integer, nullable=False)
 
+class ProductRating(db.Model):
+    __tablename__ = 'product_ratings'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    product_name = db.Column(db.String(255), nullable=False)
+    rating = db.Column(db.Float, nullable=False)
+    review = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
 
 # Create tables
 with app.app_context():
@@ -111,27 +120,41 @@ def get_current_user():
     return None
 
 
-# ================= RECOMMENDATION ENGINE ===================
-def content_based_recommendations(train_data, item_name, top_n=10):
-    if item_name not in train_data['Name'].values:
-        return pd.DataFrame()
+from difflib import get_close_matches
 
+def content_based_recommendations(train_data, item_name, top_n=10):
+    # Try exact match first
+    if item_name not in train_data['Name'].values:
+        # Try partial matching
+        all_product_names = train_data['Name'].str.lower().tolist()
+        search_term = item_name.lower()
+        
+        # Find products containing the search term
+        matching_products = train_data[train_data['Name'].str.lower().str.contains(search_term, na=False)]
+        
+        if matching_products.empty:
+            # Try fuzzy matching as last resort
+            close_matches = get_close_matches(search_term, all_product_names, n=1, cutoff=0.3)
+            if close_matches:
+                item_name = train_data[train_data['Name'].str.lower() == close_matches[0]]['Name'].iloc[0]
+            else:
+                return pd.DataFrame()
+        else:
+            # Use the first matching product
+            item_name = matching_products['Name'].iloc[0]
+
+    # Rest of the function remains the same
     tfidf_vectorizer = TfidfVectorizer(stop_words='english')
     tfidf_matrix = tfidf_vectorizer.fit_transform(train_data['Tags'])
-    cosine_sim = cosine_similarity(tfidf_matrix, tfidf_matrix)
+    cosine_similarities = cosine_similarity(tfidf_matrix, tfidf_matrix)
     
     item_index = train_data[train_data['Name'] == item_name].index[0]
-    similar_items = sorted(
-        list(enumerate(cosine_sim[item_index])),
-        key=lambda x: x[1],
-        reverse=True
-    )
+    similar_items = list(enumerate(cosine_similarities[item_index]))
+    similar_items = sorted(similar_items, key=lambda x: x[1], reverse=True)
+    top_similar_items = similar_items[1:top_n+1]
+    recommended_item_indices = [x[0] for x in top_similar_items]
     
-    top_similar = similar_items[1:top_n + 1]
-    recommended_indices = [i[0] for i in top_similar]
-    
-    return train_data.iloc[recommended_indices][['Name', 'ReviewCount', 'Brand', 'ImageURL', 'Rating']]
-
+    return train_data.iloc[recommended_item_indices][['Name', 'ReviewCount', 'Brand', 'ImageURL', 'Rating']]
 
 def collaborative_recommendations(user_id, top_n=10):
     """
@@ -182,7 +205,6 @@ def index():
         current_user=current_user
     )
 
-
 @app.route("/signup", methods=['POST'])
 def signup():
     username = request.form.get('username')
@@ -210,13 +232,17 @@ def signup():
     try:
         db.session.add(new_user)
         db.session.commit()
-        flash('Account created successfully! Please sign in.', 'success')
+        
+        # Auto-login after signup
+        session['user_id'] = new_user.id
+        session['username'] = new_user.username
+        
+        flash(f'Welcome {username}! Your account has been created successfully!', 'success')
+        return redirect(url_for('index'))
     except Exception as e:
         db.session.rollback()
         flash('An error occurred. Please try again.', 'danger')
-    
-    return redirect(url_for('index'))
-
+        return redirect(url_for('index'))
 
 @app.route('/signin', methods=['POST'])
 def signin():
@@ -272,39 +298,42 @@ def recommendations():
         current_user=current_user
     )
 
-
 @app.route('/add-to-cart', methods=['POST'])
 @login_required
 def add_to_cart():
-    product_name = request.form.get('product_name')
-    product_image = request.form.get('product_image')
-    product_brand = request.form.get('product_brand')
-    product_price = float(request.form.get('product_price'))
-    
-    # Check if item already in cart
-    existing_item = Cart.query.filter_by(
-        user_id=session['user_id'],
-        product_name=product_name
-    ).first()
-    
-    if existing_item:
-        existing_item.quantity += 1
-        flash('Product quantity updated in cart!', 'success')
-    else:
-        cart_item = Cart(
+    try:
+        product_name = request.form.get('product_name')
+        product_image = request.form.get('product_image')
+        product_brand = request.form.get('product_brand')
+        product_price = float(request.form.get('product_price', 0))
+        
+        # Check if item already in cart
+        existing_item = Cart.query.filter_by(
             user_id=session['user_id'],
-            product_name=product_name,
-            product_image=product_image,
-            product_brand=product_brand,
-            product_price=product_price
-        )
-        db.session.add(cart_item)
-        flash('Product added to cart!', 'success')
+            product_name=product_name
+        ).first()
+        
+        if existing_item:
+            existing_item.quantity += 1
+            flash('Product quantity updated in cart!', 'success')
+        else:
+            cart_item = Cart(
+                user_id=session['user_id'],
+                product_name=product_name,
+                product_image=product_image,
+                product_brand=product_brand,
+                product_price=product_price
+            )
+            db.session.add(cart_item)
+            flash('Product added to cart!', 'success')
+        
+        db.session.commit()
+        return redirect(request.referrer or url_for('index'))
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error adding to cart: {str(e)}', 'danger')
+        return redirect(request.referrer or url_for('index'))
     
-    db.session.commit()
-    return redirect(request.referrer or url_for('index'))
-
-
 @app.route('/cart')
 @login_required
 def view_cart():
@@ -505,6 +534,54 @@ def remove_from_wishlist(item_id):
     flash('Item removed from wishlist!', 'success')
     
     return redirect(url_for('view_wishlist'))
+
+@app.route('/search-suggestions', methods=['POST'])
+def search_suggestions():
+    term = request.form.get('term', '').lower()
+    
+    # Get matching product names
+    matching_products = train_data[
+        train_data['Name'].str.lower().str.contains(term, na=False)
+    ]['Name'].head(10).tolist()
+    
+    return jsonify({'suggestions': matching_products})
+@app.route('/rate-product', methods=['POST'])
+@login_required
+def rate_product():
+    try:
+        product_name = request.form.get('product_name')
+        rating = float(request.form.get('rating'))
+        review = request.form.get('review', '')
+        
+        # Check if user already rated this product
+        existing_rating = ProductRating.query.filter_by(
+            user_id=session['user_id'],
+            product_name=product_name
+        ).first()
+        
+        if existing_rating:
+            existing_rating.rating = rating
+            existing_rating.review = review
+            flash('Your rating has been updated!', 'success')
+        else:
+            new_rating = ProductRating(
+                user_id=session['user_id'],
+                product_name=product_name,
+                rating=rating,
+                review=review
+            )
+            db.session.add(new_rating)
+            flash('Thank you for your rating!', 'success')
+        
+        db.session.commit()
+        return redirect(request.referrer or url_for('index'))
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error submitting rating: {str(e)}', 'danger')
+        return redirect(request.referrer or url_for('index'))
+
+
+
 # ================= RUN SERVER =============================
 if __name__ == '__main__':
     app.run(debug=True)
