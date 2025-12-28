@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Wishlist - Ecommerce System</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        body { background-color: #f8f9fa; }
+        .product-card {
+            transition: transform 0.3s;
+            height: 100%;
+        }
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .card-img-top {
+            height: 200px;
+            object-fit: cover;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <a class="navbar-brand" href="/">Ecommerce System</a>
+    <div class="collapse navbar-collapse justify-content-end">
+        <ul class="navbar-nav">
+            <li class="nav-item"><a class="nav-link" href="/"><i class="fas fa-home"></i> Home</a></li>
+            <li class="nav-item"><a class="nav-link" href="/main"><i class="fas fa-search"></i> Recommendations</a></li>
+            <li class="nav-item"><a class="nav-link" href="/cart"><i class="fas fa-shopping-cart"></i> Cart</a></li>
+            <li class="nav-item active"><a class="nav-link" href="/wishlist"><i class="fas fa-heart"></i> Wishlist</a></li>
+            <li class="nav-item"><a class="nav-link" href="/profile"><i class="fas fa-user"></i> Profile</a></li>
+            <li class="nav-item"><a class="nav-link" href="/logout"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+        </ul>
+    </div>
+</nav>
+
+<div class="container mt-5">
+    <h2 class="mb-4"><i class="fas fa-heart text-danger"></i> My Wishlist</h2>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show">
+                {{ message }}
+                <button type="button" class="close" data-dismiss="alert">&times;</button>
+            </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    {% if wishlist_items %}
+    <div class="row">
+        {% for item in wishlist_items %}
+        <div class="col-md-3 col-sm-6 mb-4">
+            <div class="card product-card">
+                <img src="{{ item.product_image }}" class="card-img-top" alt="{{ item.product_name }}">
+                <div class="card-body">
+                    <h5 class="card-title">{{ item.product_name[:30] }}...</h5>
+                    <p class="card-text">
+                        <strong>Brand:</strong> {{ item.product_brand }}<br>
+                        <small class="text-muted">Added {{ item.added_at.strftime('%b %d') }}</small>
+                    </p>
+                    
+                    <form method="POST" action="/add-to-cart" class="mb-2">
+                        <input type="hidden" name="product_name" value="{{ item.product_name }}">
+                        <input type="hidden" name="product_image" value="{{ item.product_image }}">
+                        <input type="hidden" name="product_brand" value="{{ item.product_brand }}">
+                        <input type="hidden" name="product_price" value="50">
+                        <button type="submit" class="btn btn-primary btn-block">
+                            <i class="fas fa-shopping-cart"></i> Move to Cart
+                        </button>
+                    </form>
+                    
+                    <a href="/remove-wishlist/{{ item.id }}" class="btn btn-outline-danger btn-block btn-sm" 
+                       onclick="return confirm('Remove from wishlist?')">
+                        <i class="fas fa-trash"></i> Remove
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+        <i class="fas fa-heart-broken fa-5x text-muted mb-3"></i>
+        <h3>Your wishlist is empty</h3>
+        <p class="text-muted">Save items you love for later!</p>
+        <a href="/main" class="btn btn-primary btn-lg mt-3">
+            <i class="fas fa-search"></i> Browse Products
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<footer class="footer bg-dark text-white mt-5" style="padding: 20px 0;">
+    <div class="container text-center">
+        <p class="mb-0">© 2024 Ecommerce Recommendation System. All Rights Reserved.</p>
+    </div>
+</footer>
+
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
